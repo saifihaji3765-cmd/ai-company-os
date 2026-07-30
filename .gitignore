@@ -1,0 +1,74 @@
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+
+# Dependencies
+node_modules/
+.pnpm-store/
+.yarn/
+
+
+# Build Output
+.next/
+dist/
+build/
+out/
+
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+
+# Database Local Files
+*.sqlite
+*.db
+
+
+# Cache
+.cache/
+.temp/
+tmp/
+
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+
+# IDE Files
+.vscode/
+.idea/
+
+
+# Testing
+coverage/
+
+
+# Uploads
+uploads/
+storage/temp/
+
+
+# Secrets
+secrets/
+*.pem
+*.key
+
+
+# AI Generated Files
+ai-cache/
+model-cache/
+
+
+# Docker
+docker-data/
+
+
+# Local Configuration
+*.local
