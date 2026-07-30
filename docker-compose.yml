@@ -1,0 +1,117 @@
+version: "3.9"
+
+services:
+
+  # Main Database
+  postgres:
+
+    image: postgres:16
+
+    container_name: ai-company-os-db
+
+    restart: unless-stopped
+
+    environment:
+
+      POSTGRES_USER: ${DATABASE_USER}
+
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+
+      POSTGRES_DB: ${DATABASE_NAME}
+
+
+    ports:
+
+      - "5432:5432"
+
+
+    volumes:
+
+      - postgres_data:/var/lib/postgresql/data
+
+
+
+  # Redis Cache & Queue System
+
+  redis:
+
+    image: redis:7
+
+    container_name: ai-company-os-cache
+
+    restart: unless-stopped
+
+
+    ports:
+
+      - "6379:6379"
+
+
+
+  # Backend API
+
+  backend:
+
+    build:
+
+      context: ./backend
+
+
+    container_name: ai-company-os-api
+
+
+    restart: unless-stopped
+
+
+    ports:
+
+      - "4000:4000"
+
+
+    env_file:
+
+      - .env
+
+
+    depends_on:
+
+      - postgres
+
+      - redis
+
+
+
+  # Dashboard
+
+  dashboard:
+
+    build:
+
+      context: ./apps/dashboard
+
+
+    container_name: ai-company-os-dashboard
+
+
+    restart: unless-stopped
+
+
+    ports:
+
+      - "3000:3000"
+
+
+    env_file:
+
+      - .env
+
+
+    depends_on:
+
+      - backend
+
+
+
+volumes:
+
+  postgres_data:
