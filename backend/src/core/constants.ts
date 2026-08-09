@@ -1,0 +1,39 @@
+export const HTTP_STATUS = Object.freeze({
+  OK: 200,
+  CREATED: 201,
+  NO_CONTENT: 204,
+
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  TOO_MANY_REQUESTS: 429,
+
+  INTERNAL_SERVER_ERROR: 500,
+  BAD_GATEWAY: 502,
+  SERVICE_UNAVAILABLE: 503,
+} as const);
+
+export const CORE_LIMITS = Object.freeze({
+  MAX_REQUEST_ID_LENGTH: 128,
+  MAX_CORRELATION_ID_LENGTH: 128,
+} as const);
+
+export const APPLICATION_HEADERS = Object.freeze({
+  REQUEST_ID: "x-request-id",
+  CORRELATION_ID: "x-correlation-id",
+} as const);
+
+export const SERVICE_STATES = Object.freeze({
+  STARTING: "starting",
+  READY: "ready",
+  DEGRADED: "degraded",
+  STOPPING: "stopping",
+  STOPPED: "stopped",
+} as const);
+
+export const SHUTDOWN_SIGNALS = Object.freeze([
+  "SIGINT",
+  "SIGTERM",
+] as const);
