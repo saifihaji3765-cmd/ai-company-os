@@ -1,84 +1,58 @@
 import type {
-  DocumentContent,
-  DocumentSection,
-  DocumentRequirement,
+  AIDocumentSection,
+  AIRequirement,
 } from "./document-intelligence.types";
 
-/**
- * DocumentParser
- *
- * Converts raw document content into structured,
- * machine-readable company requirements.
- *
- * This layer is intentionally separated from the reader so that:
- * Reader  -> reads data
- * Parser  -> understands structure
- * Analyzer -> derives requirements
- * Builder -> converts requirements into implementation
- */
+export interface DocumentParserInput {
+  readonly documentId: string;
+  readonly title: string;
+  readonly content: string;
+}
 
 export interface ParsedDocument {
   readonly documentId: string;
   readonly title: string;
-  readonly sections: readonly DocumentSection[];
-  readonly requirements: readonly DocumentRequirement[];
-  readonly metadata: Readonly<Record<string, unknown>>;
-}
-
-export interface DocumentParserOptions {
-  readonly detectRequirements?: boolean;
-  readonly preserveMetadata?: boolean;
+  readonly sections: readonly AIDocumentSection[];
+  readonly requirements: readonly AIRequirement[];
 }
 
 export class DocumentParser {
-  public parse(
-    document: DocumentContent,
-    options: DocumentParserOptions = {},
-  ): ParsedDocument {
-    const detectRequirements =
-      options.detectRequirements ?? true;
+  public parse(input: DocumentParserInput): ParsedDocument {
+    const sections = this.extractSections(input.content);
 
-    const preserveMetadata =
-      options.preserveMetadata ?? true;
-
-    const sections = this.extractSections(document);
-
-    const requirements = detectRequirements
-      ? this.extractRequirements(sections)
-      : [];
+    const requirements = this.extractRequirements(sections);
 
     return {
-      documentId: document.id,
-      title: document.title,
+      documentId: input.documentId,
+      title: input.title,
       sections,
       requirements,
-      metadata: preserveMetadata
-        ? { ...document.metadata }
-        : {},
     };
   }
 
   private extractSections(
-    document: DocumentContent,
-  ): DocumentSection[] {
-    const lines = document.content.split(/\r?\n/);
+    content: string,
+  ): AIDocumentSection[] {
+    const lines = content.split(/\r?\n/);
 
-    const sections: DocumentSection[] = [];
+    const sections: AIDocumentSection[] = [];
 
     let currentTitle = "General";
     let currentContent: string[] = [];
 
     const flushSection = (): void => {
-      const content = currentContent.join("\n").trim();
+      const sectionContent =
+        currentContent.join("\n").trim();
 
-      if (!content) {
+      if (!sectionContent) {
         return;
       }
 
       sections.push({
-        id: this.createSectionId(currentTitle, sections.length),
+        id: `section-${sections.length + 1}`,
         title: currentTitle,
-        content,
+        content: sectionContent,
+        order: sections.length,
       });
 
       currentContent = [];
@@ -102,28 +76,32 @@ export class DocumentParser {
   }
 
   private extractRequirements(
-    sections: readonly DocumentSection[],
-  ): DocumentRequirement[] {
-    const requirements: DocumentRequirement[] = [];
+    sections: readonly AIDocumentSection[],
+  ): AIRequirement[] {
+    const requirements: AIRequirement[] = [];
 
     for (const section of sections) {
       const lines = section.content.split(/\r?\n/);
 
       for (const line of lines) {
-        const text = line.trim();
+        const statement = this.cleanRequirement(line);
 
-        if (!text) {
+        if (!statement) {
           continue;
         }
 
-        if (!this.looksLikeRequirement(text)) {
+        if (!this.looksLikeRequirement(statement)) {
           continue;
         }
 
         requirements.push({
-          id: `req-${requirements.length + 1}`,
-          statement: this.cleanRequirement(text),
+          id: `requirement-${requirements.length + 1}`,
+          statement,
+          priority: "medium",
+          status: "identified",
           sourceSectionId: section.id,
+          dependencies: [],
+          acceptanceCriteria: [],
         });
       }
     }
@@ -144,14 +122,6 @@ export class DocumentParser {
       .trim();
   }
 
-  private looksLikeRequirement(line: string): boolean {
-    return (
-      /^[-*]\s+/.test(line) ||
-      /^\d+[.)]\s+/.test(line) ||
-      /^(must|should|required|need|needs|shall|will)\b/i.test(line)
-    );
-  }
-
   private cleanRequirement(line: string): string {
     return line
       .replace(/^[-*]\s+/, "")
@@ -159,15 +129,13 @@ export class DocumentParser {
       .trim();
   }
 
-  private createSectionId(
-    title: string,
-    index: number,
-  ): string {
-    const normalized = title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-
-    return `section-${index + 1}-${normalized || "general"}`;
+  private looksLikeRequirement(line: string): boolean {
+    return (
+      /^[-*]\s+/.test(line) ||
+      /^\d+[.)]\s+/.test(line) ||
+      /^(must|should|required|need|needs|shall|will)\b/i.test(
+        line,
+      )
+    );
   }
 }
